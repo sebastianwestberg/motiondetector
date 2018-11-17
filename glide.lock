@@ -1,0 +1,8 @@
+hash: b5da86e202196a1b30ab489d00efe54501240411abe9e0d40a0da345bf61bb6a
+updated: 2018-11-17T14:39:59.855156+01:00
+imports:
+- name: github.com/anthonynsimon/bild
+  version: 35fd1904d43f809ded0959922164885e25577aa2
+  subpackages:
+  - '...'
+testImports: []

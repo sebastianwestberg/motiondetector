@@ -1,0 +1,6 @@
+package: github.com/sebastianwestberg/motiondetector
+import:
+- package: github.com/anthonynsimon/bild
+  version: ~0.10.0
+  subpackages:
+  - '...'
