@@ -35,7 +35,7 @@ func (m *motionDetectionBasic) Detect(ref image.Image, curr image.Image) bool {
 
 func applyFilters(img image.Image) *image.Gray {
 	resized := transform.Resize(img, 250, 200, transform.Linear)
-	blurred := blur.Gaussian(resized, 0.5)
+	blurred := blur.Gaussian(resized, 1)
 	greyscaled := effect.Grayscale(blurred)
 
 	return greyscaled

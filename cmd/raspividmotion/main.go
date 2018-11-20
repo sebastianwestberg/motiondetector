@@ -14,7 +14,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/anthonynsimon/bild/imgio"
 	"github.com/sebastianwestberg/motiondetector/capture/raspivid"
 	"github.com/sebastianwestberg/motiondetector/detection"
 )
@@ -23,35 +22,42 @@ func main() {
 	errorChannel := make(chan error)
 
 	settings := raspivid.Settings{
-		Width:  1024,
-		Height: 800,
-		FPS:    3,
+		Width:         1024,
+		Height:        800,
+		FPS:           3,
+		Codec:         raspivid.CodecMJPEG,
+		VerticalFlip:  true,
+		DetectOnFrame: 3,
+		Debug:         true,
 	}
-	r := raspivid.NewCapture(settings).Capture()
+	c := raspivid.NewCapture(settings).Capture()
 
 	motion := detection.NewBasicMotionDetection()
 
 	go func() {
-		var lastFrame image.Image
-		var counter uint
-		frameWorker(splitOnFrame(r), func(img image.Image) {
+		var (
+			referenceFrame image.Image
+			frameCounter   int
+		)
+
+		frameWorker(splitOnFrame(c), func(img image.Image) {
 			timeNow := time.Now()
 
 			defer func() {
-				counter++
+				frameCounter++
 			}()
-			if counter%3 != 0 {
+			if frameCounter%settings.DetectOnFrame != 0 {
 				return
 			}
 
-			if lastFrame != nil {
-				motion := motion.Detect(lastFrame, img)
+			if referenceFrame != nil {
+				motion := motion.Detect(referenceFrame, img)
 				if motion == true {
-					log.Println("Motion detected!!")
+					log.Println("Motion detected!")
 
-					if err := imgio.Save(fmt.Sprintf("imgs/motion-%d.jpg", counter), img, imgio.JPEG); err != nil {
-						panic(err)
-					}
+					// if err := imgio.Save(fmt.Sprintf("imgs/motion-%d.jpg", counter), img, imgio.JPEG); err != nil {
+					// 	panic(err)
+					// }
 
 					var buf bytes.Buffer
 					jpeg.Encode(&buf, img, &jpeg.Options{Quality: 95})
@@ -59,8 +65,11 @@ func main() {
 				}
 			}
 
-			lastFrame = img
-			log.Printf("counter %d took %v\n", counter, time.Since(timeNow))
+			referenceFrame = img
+
+			if settings.Debug == true {
+				log.Printf("Frame %d took %v\n to run detection on", frameCounter, time.Since(timeNow))
+			}
 		})
 	}()
 
